@@ -38,15 +38,17 @@ $count = 0;
 while ($row = $result->fetch_assoc()) { 
 	$count++;
 	?>
-	<h2><?=$row["name"]?></h2>
 	<div class="row">
 		<div class="col-sm-3">
 			<img src="<?=$row["imageURL"]?>" data-toggle="modal" data-target="#modal<?=$count?>" />
+			<button class="btn btn-primary btn-block" data-toggle="modal" data-target="#modal<?=$count?>">Full Size</button>
 		</div>
 		<div class="col-sm-9">
-			<h3><?=$row["subject"]?></h3>
-			<p><?=$row["text"]?></p>
-			<button class="btn btn-primary" data-toggle="modal" data-target="#modal<?=$count?>">Full Size</button>
+			<h2><?=$row["name"]?> <span><?=$row["email"]?></span></h2>
+			<div class="text">
+				<h3><?=$row["subject"]?></h3>
+				<p><?=$row["text"]?></p>
+			</div>
 		</div>
 	</div>
 <!-- Modal -->
