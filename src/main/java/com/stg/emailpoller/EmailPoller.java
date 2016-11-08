@@ -1,23 +1,68 @@
 package com.stg.emailpoller;
 
+import com.stg.emailpoller.dto.UserPhotoDto;
+import com.stg.emailpoller.repository.DataSourceFactory;
+import org.skife.jdbi.v2.DBI;
+
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.util.List;
+import java.util.Properties;
+
 /**
  * Main driver.
- *
  */
-public class EmailPoller
-{
+public class EmailPoller {
+    private DataSource dataSource;
+    private DBI dbi;
+    private String emailAddress;
+    private String password;
+    private Properties configProps;
+
+    public EmailPoller() {
+        ReadConfig readConfig = new ReadConfig("config.properties");
+        dataSource = DataSourceFactory.getMySQLDataSource();
+
+        try {
+            configProps = readConfig.getPropValues();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        emailAddress = configProps.getProperty("gmail.login");
+        password = configProps.getProperty("gmail.password");
+    }
+
     public static void main(String[] args) {
-        EmailPoller intSort = new EmailPoller();
-        intSort.init();
-        intSort.execute();
+        EmailPoller emailPoller = new EmailPoller();
+        emailPoller.init();
+        emailPoller.execute();
+        emailPoller.egress();
     }
 
     public void init() {
-        // Do nothing
+
+        System.out.println("Hello Email Poller Application.");
+        dbi = new DBI(dataSource);
     }
 
     public void execute() {
-        // Do nothing
-        System.out.println("Hello Email Poller Application.");
+//        UserDao userDao = dbi.open(UserDao.class);
+//        PhotoDao photoDao = dbi.open(PhotoDao.class);
+
+        Email email = new Email();
+        try {
+            List<UserPhotoDto> userPhotoDtoList = email.read(emailAddress, password);
+            for (UserPhotoDto item : userPhotoDtoList) {
+                System.out.println(item);
+//                userDao.insert(item.getUserId(), item.getUserName());
+//                Long userId = userDao.findNameByEmail(item.getUserId());
+//                photoDao.insert(item.getSubject(), item.getText(), item.getImageUrl(), userId);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void egress() {
     }
 }
