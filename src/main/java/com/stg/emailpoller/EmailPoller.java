@@ -1,7 +1,11 @@
 package com.stg.emailpoller;
 
 import com.stg.emailpoller.dto.UserPhotoDto;
+import com.stg.emailpoller.model.Photo;
+import com.stg.emailpoller.model.User;
 import com.stg.emailpoller.repository.DataSourceFactory;
+import com.stg.emailpoller.repository.PhotoDao;
+import com.stg.emailpoller.repository.UserDao;
 import org.skife.jdbi.v2.DBI;
 
 import javax.sql.DataSource;
@@ -46,17 +50,19 @@ public class EmailPoller {
     }
 
     public void execute() {
-//        UserDao userDao = dbi.open(UserDao.class);
-//        PhotoDao photoDao = dbi.open(PhotoDao.class);
+        UserDao userDao = dbi.open(UserDao.class);
+        PhotoDao photoDao = dbi.open(PhotoDao.class);
 
         Email email = new Email();
         try {
             List<UserPhotoDto> userPhotoDtoList = email.read(emailAddress, password);
             for (UserPhotoDto item : userPhotoDtoList) {
                 System.out.println(item);
-//                userDao.insert(item.getUserId(), item.getUserName());
-//                Long userId = userDao.findNameByEmail(item.getUserId());
-//                photoDao.insert(item.getSubject(), item.getText(), item.getImageUrl(), userId);
+                User user = item.getUser();
+                Photo photo = item.getPhoto();
+                userDao.insert(user.getEmail(), user.getName());
+                Long userId = userDao.findNameByEmail(user.getEmail());
+                photoDao.insert(photo.getSubject(), photo.getText(), photo.getImageUrl(), userId);
             }
         } catch (IOException e) {
             e.printStackTrace();
