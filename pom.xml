@@ -20,6 +20,10 @@
   <name>email-poller</name>
   <url>http://maven.apache.org</url>
 
+  <properties>
+      <flyway.version>4.0.3</flyway.version>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -50,7 +54,7 @@
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
-      <version>4.0.3</version>
+      <version>${flyway.version}</version>
     </dependency>
 
   </dependencies>
