@@ -1,5 +1,9 @@
 package com.stg.emailpoller;
 
+import com.stg.emailpoller.dto.UserPhotoDto;
+import com.stg.emailpoller.model.Photo;
+import com.stg.emailpoller.model.User;
+
 import javax.mail.Address;
 import javax.mail.Folder;
 import javax.mail.Message;
@@ -17,8 +21,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
+import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Fetch Email.
@@ -27,8 +37,10 @@ import java.util.Properties;
  */
 public class FetchEmail {
 
-    public static void fetch(String pop3Host, String storeType, String user,
-                             String password) {
+    public static List<UserPhotoDto> fetch(String pop3Host, String storeType, String user, String password) {
+
+        List<UserPhotoDto> userPhotoDtoList = new ArrayList<>(0);
+
         try {
             // create properties field
             Properties properties = new Properties();
@@ -57,7 +69,9 @@ public class FetchEmail {
             for (int i = 0; i < messages.length; i++) {
                 Message message = messages[i];
                 System.out.println("---------------------------------");
-                writePart(message);
+                UserPhotoDto userPhotoDto = new UserPhotoDto(new User(), new Photo());
+                userPhotoDto = writePart(message, userPhotoDto);
+                userPhotoDtoList.add(userPhotoDto);
                 String line = "YES";
 //                try {
 //                    line = reader.readLine();
@@ -69,21 +83,6 @@ public class FetchEmail {
                 } else if ("QUIT".equals(line)) {
                    break;
                 }
-                // String line = reader.readLine();
-//                int c = reader.read();
-//                System.out.print(c);
-                // This is what I get....when I stop
-                // This is the message envelope
-//                ---------------------------
-//                TOP 2 0
-//                <EOF>
-//                QUIT
-//                <EOF>
-//                if ("YES".equals(line)) {
-//                    message.writeTo(System.out);
-//                } else if ("QUIT".equals(line)) {
-//                    break;
-//                }
             }
 
             // close the store and folder objects
@@ -99,6 +98,7 @@ public class FetchEmail {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return userPhotoDtoList;
     }
 //       public static void main(String[] args) {
 //
@@ -118,10 +118,12 @@ public class FetchEmail {
     * based on which, it processes and
     * fetches the content of the message
     */
-    public static void writePart(Part p) throws Exception {
-        if (p instanceof Message)
+    public static UserPhotoDto writePart(Part p, UserPhotoDto pUserPhotoDto) throws Exception {
+//        UserPhotoDto userPhotoDto = new UserPhotoDto(new User(), new Photo());
+        if (p instanceof Message) {
             //Call methos writeEnvelope
-            writeEnvelope((Message) p);
+            pUserPhotoDto = writeEnvelope((Message) p);
+        }
 
         System.out.println("----------------------------");
         System.out.println("CONTENT-TYPE: " + p.getContentType());
@@ -131,6 +133,7 @@ public class FetchEmail {
             System.out.println("This is plain text");
             System.out.println("---------------------------");
             System.out.println((String) p.getContent());
+            pUserPhotoDto.getPhoto().setText((String) p.getContent());
         }
         //check if the content has attachment
         else if (p.isMimeType("multipart/*")) {
@@ -139,13 +142,13 @@ public class FetchEmail {
             Multipart mp = (Multipart) p.getContent();
             int count = mp.getCount();
             for (int i = 0; i < count; i++)
-                writePart(mp.getBodyPart(i));
+                pUserPhotoDto = writePart(mp.getBodyPart(i), pUserPhotoDto);
         }
         //check if the content is a nested message
         else if (p.isMimeType("message/rfc822")) {
             System.out.println("This is a Nested Message");
             System.out.println("---------------------------");
-            writePart((Part) p.getContent());
+            pUserPhotoDto = writePart((Part) p.getContent(), pUserPhotoDto);
         }
         //check if the content is an inline image
         else if (p.isMimeType("image/jpeg")) {
@@ -163,7 +166,11 @@ public class FetchEmail {
                     i = 0;
                 break;
             }
-            FileOutputStream f2 = new FileOutputStream("./image.jpg");
+            Random random = new Random(new Date().getTime());
+            SimpleDateFormat sdf = new SimpleDateFormat("ddMMyy-hhmmss.SSS");
+            String fileName = String.format("./ImageFile-%s.%d.%s", sdf.format( new Date() ), random.nextInt(9), "jpg");
+            FileOutputStream f2 = new FileOutputStream(fileName);
+            pUserPhotoDto.getPhoto().setImageUrl(fileName);
             f2.write(bArray);
         } else if (p.getContentType().contains("image/")) {
             System.out.println("content type" + p.getContentType());
@@ -201,20 +208,26 @@ public class FetchEmail {
             }
         }
 
+        return pUserPhotoDto;
     }
 
     /*
     * This method would print FROM,TO and SUBJECT of the message
     */
-    public static void writeEnvelope(Message m) throws Exception {
+    public static UserPhotoDto writeEnvelope(Message m) throws Exception {
+        UserPhotoDto userPhotoDto = new UserPhotoDto();
+        User user = new User();
+        Photo photo = new Photo();
         System.out.println("This is the message envelope");
         System.out.println("---------------------------");
         Address[] a;
 
         // FROM
         if ((a = m.getFrom()) != null) {
-            for (int j = 0; j < a.length; j++)
+            for (int j = 0; j < a.length; j++) {
                 System.out.println("FROM: " + a[j].toString());
+                user = extractNameEmail(a[j].toString(), user);
+            }
         }
 
         // TO
@@ -224,8 +237,44 @@ public class FetchEmail {
         }
 
         // SUBJECT
-        if (m.getSubject() != null)
+        if (m.getSubject() != null) {
             System.out.println("SUBJECT: " + m.getSubject());
+            photo = new Photo(m.getSubject(), null, null, null);
+        }
 
+        // SENT DATE
+        if (m.getSentDate() != null) {
+            System.out.println("SENT DATE: " + m.getSentDate());
+            photo.setSentDate(m.getSentDate());
+        }
+        userPhotoDto.setUser(user);
+        userPhotoDto.setPhoto(photo);
+
+        return userPhotoDto;
     }
+
+    /**
+     * Extract name and email from address.
+     * @param pFrom the {@link String} from email string
+     * @param user the {@link User} object to update
+     * @return the {@link User} object
+     */
+    private static User extractNameEmail(String pFrom, User user) {
+        String fromString = pFrom.substring(6).trim(); // filter FROM:
+        // Use DOTALL pattern
+        Pattern p = Pattern.compile("(.*?)<([^>]+)>\\s*,?", Pattern.DOTALL);
+
+        Matcher m = p.matcher(fromString);
+
+        while (m.find()) {
+            // filter newline
+            String name = m.group(1).replaceAll("[\\n\\r]+", "");
+            String email = m.group(2).replaceAll("[\\n\\r]+", "");
+            user.setName(name);
+            user.setEmail(email);
+            // System.out.println(name + " -> " + email);
+        }
+        return user;
+    }
+
 }

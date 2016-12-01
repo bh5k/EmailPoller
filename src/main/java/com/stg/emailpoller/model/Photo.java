@@ -13,6 +13,9 @@ public class Photo {
     private String imageUrl;
     private Date sentDate;
 
+    public Photo() {
+    }
+
     public Photo(String subject, String text, String imageUrl, Date sentDate) {
         this.subject = subject;
         this.text = text;

@@ -1,10 +1,12 @@
 package com.stg.emailpoller;
 
+import com.stg.emailpoller.dto.UserPhotoDto;
 import com.stg.emailpoller.repository.DataSourceFactory;
 import org.skife.jdbi.v2.DBI;
 
 import javax.sql.DataSource;
 import java.io.IOException;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -56,7 +58,15 @@ public class EmailPoller {
 //                "dqromney@gmail.com";// change accordingly
 //        String password = "Tgtb5501";// change accordingly
         // Call method fetch
-        FetchEmail.fetch(host, mailStoreType, username, password);
+        List<UserPhotoDto> userPhotoDtoList = FetchEmail.fetch(host, mailStoreType, username, password);
+        for (UserPhotoDto item : userPhotoDtoList) {
+            System.out.println(item);
+//            User user = item.getUser();
+//            Photo photo = item.getPhoto();
+//            userDao.insert(user.getEmail(), user.getName());
+//            Long userId = userDao.findNameByEmail(user.getEmail());
+//            photoDao.insert(photo.getSubject(), photo.getText(), photo.getImageUrl(), userId);
+        }
 
 //        Email email = new Email();
 //        try {
@@ -75,5 +85,6 @@ public class EmailPoller {
     }
 
     public void egress() {
+        System.out.println("Exiting Email Poller Application.");
     }
 }
