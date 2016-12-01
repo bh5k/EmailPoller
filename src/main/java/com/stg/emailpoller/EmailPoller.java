@@ -1,16 +1,10 @@
 package com.stg.emailpoller;
 
-import com.stg.emailpoller.dto.UserPhotoDto;
-import com.stg.emailpoller.model.Photo;
-import com.stg.emailpoller.model.User;
 import com.stg.emailpoller.repository.DataSourceFactory;
-import com.stg.emailpoller.repository.PhotoDao;
-import com.stg.emailpoller.repository.UserDao;
 import org.skife.jdbi.v2.DBI;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.util.List;
 import java.util.Properties;
 
 /**
@@ -50,23 +44,34 @@ public class EmailPoller {
     }
 
     public void execute() {
-        UserDao userDao = dbi.open(UserDao.class);
-        PhotoDao photoDao = dbi.open(PhotoDao.class);
+//        UserDao userDao = dbi.open(UserDao.class);
+//        PhotoDao photoDao = dbi.open(PhotoDao.class);
 
-        Email email = new Email();
-        try {
-            List<UserPhotoDto> userPhotoDtoList = email.read(emailAddress, password);
-            for (UserPhotoDto item : userPhotoDtoList) {
-                System.out.println(item);
-                User user = item.getUser();
-                Photo photo = item.getPhoto();
-                userDao.insert(user.getEmail(), user.getName());
-                Long userId = userDao.findNameByEmail(user.getEmail());
-                photoDao.insert(photo.getSubject(), photo.getText(), photo.getImageUrl(), userId);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String host = "pop.gmail.com";// change accordingly
+        String mailStoreType = "pop3";
+        String username =
+                "stgtest.user@stgconsulting.com";// change accordingly
+        String password = "Test_User_Password0";// change accordingly
+//        String username =
+//                "dqromney@gmail.com";// change accordingly
+//        String password = "Tgtb5501";// change accordingly
+        // Call method fetch
+        FetchEmail.fetch(host, mailStoreType, username, password);
+
+//        Email email = new Email();
+//        try {
+//            List<UserPhotoDto> userPhotoDtoList = email.read(emailAddress, password);
+//            for (UserPhotoDto item : userPhotoDtoList) {
+//                System.out.println(item);
+//                User user = item.getUser();
+//                Photo photo = item.getPhoto();
+//                userDao.insert(user.getEmail(), user.getName());
+//                Long userId = userDao.findNameByEmail(user.getEmail());
+//                photoDao.insert(photo.getSubject(), photo.getText(), photo.getImageUrl(), userId);
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     public void egress() {
